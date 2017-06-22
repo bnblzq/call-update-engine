@@ -28,19 +28,15 @@ public class Zip {
         byte[] buffer = new byte[1024];
         File zipFile = new File(Environment.getDataDirectory(),zipFileString);
 
-        Log.d(TAG,"" + Environment.getDataDirectory());
-        Log.d(TAG, "" + mContext.getFilesDir());
-
-        if( !zipFile.isFile() ){
-            throw new FileNotFoundException("file: " + zipFileString + "not found");
+     //   Log.d(TAG,"" + Environment.getDataDirectory());
+     //   Log.d(TAG, "" + mContext.getFilesDir());
+        if(  zipFile.isFile() && zipFile.delete() ){
+            Log.d(TAG, zipFile +" exists before and be deleted");
         }
 
-        try {
-            inZip = new ZipInputStream(new FileInputStream(zipFile));
-        } catch (FileNotFoundException e) {
-            Log.d(TAG,"file problem ?");
-            e.printStackTrace();
-        }
+
+        inZip = new ZipInputStream(new FileInputStream(zipFile));
+
 
         while( ( zipEntry=inZip.getNextEntry()) != null ){
 
@@ -54,20 +50,15 @@ public class Zip {
 
                 FileOutputStream out = mContext.openFileOutput(szName, mContext.MODE_PRIVATE);
                 int len;
-                try {
-                    while( (len = inZip.read(buffer)) != -1){
+                while( (len = inZip.read(buffer)) != -1){
                         out.write(buffer,0,len);
                         out.flush();
                     }
-                } catch (IOException e) {
-                    out.close();
-                    buffer = null;
-                    e.printStackTrace();
-                }
                 out.close();
             }
         }
-        buffer = null;
+        buffer=null;
+
     }
    /* public static void main(String [] args){
 

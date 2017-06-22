@@ -1,26 +1,28 @@
 package com.example.liu.helloworld;
 
-import android.content.Context;
-import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.UpdateEngine;
+import android.os.UpdateEngineCallback;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.os.UpdateEngine;
-import android.os.UpdateEngineCallback;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-//import android.widget.Toast;
-import android.os.Handler;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
+
+//import android.widget.Toast;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -39,18 +41,33 @@ public class MainActivity extends AppCompatActivity {
     public boolean start  = true;
     public boolean cancel = false;
     ImplentOps ops = new ImplentOps();
+    boolean engineRunning = false;
 
     Map<Integer,String> updateStatus = new HashMap<>();
     Map<Integer,String> errorCode    = new HashMap<>();
 
+    public synchronized void setEngineState(boolean state){
+        engineRunning = state;
+    }
 
+    public synchronized boolean getEngineState(){
+         return engineRunning ;
+    }
 
     public UpdateEngineCallback CallbackImplement = new UpdateEngineCallback() {
         @Override
-        public void onStatusUpdate(int i, float v) {
+        public void onStatusUpdate(int i, float v) {  //i==status  v==percent
             Log.d(TAG,"status:"+i);
-            Log.d(TAG,"percent:"+v);
-            tvShow.append(updateStatus.get(i));
+            Log.d(TAG, "percent:" + v);
+            tvShow.append(updateStatus.get(i)+"\n");
+
+            if( ( i>= UpdateEngine.UpdateStatusConstants.DOWNLOADING )&& (i <= UpdateEngine.UpdateStatusConstants.FINALIZING)){
+               setEngineState(true);
+                Log.d(TAG,"sett status "+  getEngineState());
+            }else {
+                setEngineState(false);
+                Log.d(TAG, "set status " + getEngineState());
+            }
 
             if( (int)(v*100) < 100) {
                 //we leave 100% to show by onPayloadApplicationComplete
@@ -62,10 +79,10 @@ public class MainActivity extends AppCompatActivity {
         public void onPayloadApplicationComplete(int errorNum) {
             //run here means success
             if( errorNum == UpdateEngine.ErrorCodeConstants.SUCCESS ) {
-                tvShow.append(errorCode.get(errorNum));
+                tvShow.append(errorCode.get(errorNum)+"\n");
                 progressBar.setProgress(progressBar.getMax());
             }
-            tvShow.append(errorCode.get(errorNum));
+            tvShow.append(errorCode.get(errorNum)+"\n");
         }
     };
 
@@ -76,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
             handler.post(new Runnable() {
                 @Override
                 public void run() {
-                   tvShow.append(str);
+                   tvShow.append(str + "\n");
                 }
             });
         }
@@ -85,9 +102,8 @@ public class MainActivity extends AppCompatActivity {
     class ImplentOps extends Thread{
         @Override
         public void run() {
-            Log.d(TAG,"inside run");
             try {
-                Thread.sleep(10000);
+
                 //ota.zip resides on /data manually
                 Zip zip = new Zip(MainActivity.this);
                 sendInfoToUI("unzipping file...",mainHandler);
@@ -100,14 +116,22 @@ public class MainActivity extends AppCompatActivity {
 
                 //do perform
                 sendInfoToUI("applying payload...",mainHandler);
-                engine.applyPayload("file://"+MainActivity.this.getFilesDir()+File.separator+PAYLOAD_FILE , 0, 0, strArray);
+                engine.applyPayload("file://" + MainActivity.this.getFilesDir() + File.separator + PAYLOAD_FILE, 0, 0, strArray);
                 sendInfoToUI("applying done...",mainHandler);
 
-            }catch (InterruptedException e){
-                engine.cancel();
-                Log.d(TAG,"I received interrupt,ready to out");
+            }catch (InterruptedException e) {
+                Log.d(TAG,"inside interruption");
+                if(getEngineState()) {
+                    Log.d(TAG,"engine readt to stop");
+                    engine.cancel();
+                }
             } catch (Exception e) {
-                e.printStackTrace();
+                StringWriter sw = new StringWriter();
+                e.printStackTrace(new PrintWriter(sw,true));
+                String str = sw.toString();
+                sendInfoToUI(str,mainHandler);
+            }finally {
+                Log.d(TAG,"finally");
             }
         }
     }
@@ -165,19 +189,23 @@ public class MainActivity extends AppCompatActivity {
         button_cancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                Log.d(TAG, "get status in cancel" + getEngineState());
+                ops.interrupt();
+
+                Log.d(TAG,"press cancel");
                 if (cancel) {
                     button_cancel.setEnabled(false);
                     button_start.setEnabled(true);
                     start = !start;
                     cancel = !cancel;
                 }
-                ops.interrupt();
-                Log.d(TAG,"press cancel");
             }
         });
 
         if(engine.bind(CallbackImplement, mainHandler)){
             Log.d(TAG,"bind to callback success");
+            tvShow.setText("bind to callback success \n");
         }
     }
 
