@@ -38,9 +38,10 @@ public class MainActivity extends AppCompatActivity {
     public TextView tvShow = null;
     public boolean start  = true;
     public boolean cancel = false;
+    ImplentOps ops = new ImplentOps();
 
     Map<Integer,String> updateStatus = new HashMap<>();
-    Map<Integer,String> errorCode = new HashMap<>();
+    Map<Integer,String> errorCode    = new HashMap<>();
 
 
 
@@ -86,6 +87,7 @@ public class MainActivity extends AppCompatActivity {
         public void run() {
             Log.d(TAG,"inside run");
             try {
+                Thread.sleep(10000);
                 //ota.zip resides on /data manually
                 Zip zip = new Zip(MainActivity.this);
                 sendInfoToUI("unzipping file...",mainHandler);
@@ -101,6 +103,9 @@ public class MainActivity extends AppCompatActivity {
                 engine.applyPayload("file://"+MainActivity.this.getFilesDir()+File.separator+PAYLOAD_FILE , 0, 0, strArray);
                 sendInfoToUI("applying done...",mainHandler);
 
+            }catch (InterruptedException e){
+                engine.cancel();
+                Log.d(TAG,"I received interrupt,ready to out");
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -145,7 +150,6 @@ public class MainActivity extends AppCompatActivity {
         button_start.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-              ImplentOps ops = new ImplentOps();
                 ops.start();
 
                 if(start){
@@ -167,6 +171,7 @@ public class MainActivity extends AppCompatActivity {
                     start = !start;
                     cancel = !cancel;
                 }
+                ops.interrupt();
                 Log.d(TAG,"press cancel");
             }
         });
