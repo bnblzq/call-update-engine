@@ -18,6 +18,8 @@ import android.os.Handler;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -35,13 +37,18 @@ public class MainActivity extends AppCompatActivity {
     public TextView tvShow = null;
     public boolean start  = true;
     public boolean cancel = false;
+
+    Map<Integer,String> errorInfo = new HashMap<>();
+
+
+
+
     public UpdateEngineCallback CallbackImplement = new UpdateEngineCallback() {
         @Override
         public void onStatusUpdate(int i, float v) {
-            // Toast.makeText(MainActivity.this,"status: "+ i, Toast.LENGTH_SHORT).show();
-            //int progress = progressBar.getProgress();
             Log.d(TAG,"status:"+i);
             Log.d(TAG,"percent:"+v);
+            tvShow.append(errorInfo.get(i));
             progressBar.setProgress((int)(v*100));
         }
 
@@ -53,6 +60,20 @@ public class MainActivity extends AppCompatActivity {
     };
 
 
+
+
+
+    //denote some log on UI
+    private void sendInfoToUI(final String str, final Handler handler){
+        if(handler != null){
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                   tvShow.append(str);
+                }
+            });
+        }
+    }
 
     class ImplentOps extends Thread{
         @Override
@@ -89,6 +110,18 @@ public class MainActivity extends AppCompatActivity {
         button_cancel = (Button) findViewById(R.id.button_cancel);
         button_cancel.setEnabled(false);
         progressBar = (ProgressBar)findViewById(R.id.progrss_bar);
+
+        //for clearly denotion
+        errorInfo.put(UpdateEngine.UpdateStatusConstants.IDLE ,"IDLE");
+        errorInfo.put(UpdateEngine.UpdateStatusConstants.CHECKING_FOR_UPDATE ,"CHECKING_FOR_UPDATE");
+        errorInfo.put(UpdateEngine.UpdateStatusConstants.UPDATE_AVAILABLE ,"UPDATE_AVAILABLE");
+        errorInfo.put(UpdateEngine.UpdateStatusConstants.DOWNLOADING ,"DOWNLOADING");
+        errorInfo.put(UpdateEngine.UpdateStatusConstants.VERIFYING ,"VERIFYING");
+        errorInfo.put(UpdateEngine.UpdateStatusConstants.FINALIZING ,"FINALIZING");
+        errorInfo.put(UpdateEngine.UpdateStatusConstants.UPDATED_NEED_REBOOT ,"UPDATED_NEED_REBOOT");
+        errorInfo.put(UpdateEngine.UpdateStatusConstants.REPORTING_ERROR_EVENT ,"REPORTING_ERROR_EVENT");
+        errorInfo.put(UpdateEngine.UpdateStatusConstants.ATTEMPTING_ROLLBACK ,"ATTEMPTING_ROLLBACK");
+        errorInfo.put(UpdateEngine.UpdateStatusConstants.DISABLED ,"DISABLED");
 
         button_start.setOnClickListener(new View.OnClickListener() {
             @Override

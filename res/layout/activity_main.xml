@@ -12,7 +12,7 @@
         android:id="@+id/edit_text"
         android:layout_width="match_parent"
         android:layout_height="30dp"
-        android:hint="update engine test" />
+        android:hint="Info: " />
 
     <TextView
         android:id="@+id/show_text"
