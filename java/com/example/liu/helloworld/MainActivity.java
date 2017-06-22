@@ -34,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String PROPERTY_FILE = "payload_properties.txt";
     private Handler mainHandler = new Handler();
     private String[] strArray = new String[4];
+
     public  Button button_start = null;
     public  Button button_cancel = null;
     public ProgressBar progressBar = null;
@@ -120,12 +121,6 @@ public class MainActivity extends AppCompatActivity {
                 engine.applyPayload("file://" + MainActivity.this.getFilesDir() + File.separator + PAYLOAD_FILE, 0, 0, strArray);
                 sendInfoToUI("applying done...",mainHandler);
 
-            }catch (InterruptedException e) {
-                Log.d(TAG,"inside interruption");
-                if(getEngineState()) {
-                    Log.d(TAG,"engine readt to stop");
-                    engine.cancel();
-                }
             } catch (Exception e) {
                 StringWriter sw = new StringWriter();
                 e.printStackTrace(new PrintWriter(sw,true));
@@ -194,8 +189,11 @@ public class MainActivity extends AppCompatActivity {
 
                 Log.d(TAG, "get status in cancel" + getEngineState());
                 ops.interrupt();
-
-                Log.d(TAG,"press cancel");
+                if(getEngineState()) {
+                    Log.d(TAG, "engine readt to stop");
+                    engine.cancel();
+                }
+                Log.d(TAG, "press cancel");
                 if (cancel) {
                     button_cancel.setEnabled(false);
                     button_start.setEnabled(true);
