@@ -5,6 +5,7 @@ import android.os.Handler;
 import android.os.UpdateEngine;
 import android.os.UpdateEngineCallback;
 import android.support.v7.app.AppCompatActivity;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -142,6 +143,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         tvShow = (TextView)findViewById(R.id.show_text);
+        tvShow.setMovementMethod(new ScrollingMovementMethod());
         button_start =  (Button) findViewById(R.id.button_start);
         button_cancel = (Button) findViewById(R.id.button_cancel);
         button_cancel.setEnabled(false);
