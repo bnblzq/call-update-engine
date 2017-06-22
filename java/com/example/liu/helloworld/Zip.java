@@ -44,7 +44,7 @@ public class Zip {
 
         while( ( zipEntry=inZip.getNextEntry()) != null ){
 
-            //files we need rely on the toppest level
+            //files we need reside on the toppest level
             if( zipEntry.getName().contains("/") ){
                 Log.d(TAG,"found directory:" + zipEntry.getName() + "but ignore");
 
@@ -52,19 +52,6 @@ public class Zip {
                 szName = zipEntry.getName();
                 Log.d(TAG,szName);
 
-             //   File file = new File(Environment.getDataDirectory() + File.separator + szName);
-              /*  File file = new File(Environment.getDataDirectory(), szName);
-
-                if( file.exists() && file.delete()){
-                    Log.d(TAG,"file " + file.getName() + " exists and be deleted");
-                }
-
-                if( !file.createNewFile()){
-                    Log.d(TAG,"create" + file.getName() + "fail");
-                    throw  new IOException();
-                }*/
-
-                //FileOutputStream out = new FileOutputStream(file);
                 FileOutputStream out = mContext.openFileOutput(szName, mContext.MODE_PRIVATE);
                 int len;
                 try {

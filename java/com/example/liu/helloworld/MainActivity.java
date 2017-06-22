@@ -1,6 +1,7 @@
 package com.example.liu.helloworld;
 
 import android.content.Context;
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -38,8 +39,8 @@ public class MainActivity extends AppCompatActivity {
     public boolean start  = true;
     public boolean cancel = false;
 
-    Map<Integer,String> errorInfo = new HashMap<>();
-
+    Map<Integer,String> updateStatus = new HashMap<>();
+    Map<Integer,String> errorCode = new HashMap<>();
 
 
 
@@ -48,19 +49,24 @@ public class MainActivity extends AppCompatActivity {
         public void onStatusUpdate(int i, float v) {
             Log.d(TAG,"status:"+i);
             Log.d(TAG,"percent:"+v);
-            tvShow.append(errorInfo.get(i));
-            progressBar.setProgress((int)(v*100));
+            tvShow.append(updateStatus.get(i));
+
+            if( (int)(v*100) < 100) {
+                //we leave 100% to show by onPayloadApplicationComplete
+                progressBar.setProgress((int) (v * 100));
+            }
         }
 
         @Override
-        public void onPayloadApplicationComplete(int i) {
-            // Toast.makeText(MainActivity.this,"done! : "+ i, Toast.LENGTH_SHORT).show();
-            Log.d(TAG,"complete:"+i);
+        public void onPayloadApplicationComplete(int errorNum) {
+            //run here means success
+            if( errorNum == UpdateEngine.ErrorCodeConstants.SUCCESS ) {
+                tvShow.append(errorCode.get(errorNum));
+                progressBar.setProgress(progressBar.getMax());
+            }
+            tvShow.append(errorCode.get(errorNum));
         }
     };
-
-
-
 
 
     //denote some log on UI
@@ -82,17 +88,18 @@ public class MainActivity extends AppCompatActivity {
             try {
                 //ota.zip resides on /data manually
                 Zip zip = new Zip(MainActivity.this);
+                sendInfoToUI("unzipping file...",mainHandler);
                 zip.unZipToFolder(UPDATE_FILE);
-                Log.d(TAG, "upzip done");
+                sendInfoToUI("unzip done...", mainHandler);
 
                 //read file
                 FileRead.readProperty(PROPERTY_FILE , MainActivity.this , strArray);
-                Log.d(TAG, "read property done");
+                sendInfoToUI("reading property...", mainHandler);
 
                 //do perform
-                //engine.applyPayload("file:///data/payload.bin", 0, 0, strArray);
-               engine.applyPayload("file://"+MainActivity.this.getFilesDir()+File.separator+PAYLOAD_FILE , 0, 0, strArray);
-                Log.d(TAG, "apply done");
+                sendInfoToUI("applying payload...",mainHandler);
+                engine.applyPayload("file://"+MainActivity.this.getFilesDir()+File.separator+PAYLOAD_FILE , 0, 0, strArray);
+                sendInfoToUI("applying done...",mainHandler);
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -112,16 +119,28 @@ public class MainActivity extends AppCompatActivity {
         progressBar = (ProgressBar)findViewById(R.id.progrss_bar);
 
         //for clearly denotion
-        errorInfo.put(UpdateEngine.UpdateStatusConstants.IDLE ,"IDLE");
-        errorInfo.put(UpdateEngine.UpdateStatusConstants.CHECKING_FOR_UPDATE ,"CHECKING_FOR_UPDATE");
-        errorInfo.put(UpdateEngine.UpdateStatusConstants.UPDATE_AVAILABLE ,"UPDATE_AVAILABLE");
-        errorInfo.put(UpdateEngine.UpdateStatusConstants.DOWNLOADING ,"DOWNLOADING");
-        errorInfo.put(UpdateEngine.UpdateStatusConstants.VERIFYING ,"VERIFYING");
-        errorInfo.put(UpdateEngine.UpdateStatusConstants.FINALIZING ,"FINALIZING");
-        errorInfo.put(UpdateEngine.UpdateStatusConstants.UPDATED_NEED_REBOOT ,"UPDATED_NEED_REBOOT");
-        errorInfo.put(UpdateEngine.UpdateStatusConstants.REPORTING_ERROR_EVENT ,"REPORTING_ERROR_EVENT");
-        errorInfo.put(UpdateEngine.UpdateStatusConstants.ATTEMPTING_ROLLBACK ,"ATTEMPTING_ROLLBACK");
-        errorInfo.put(UpdateEngine.UpdateStatusConstants.DISABLED ,"DISABLED");
+        updateStatus.put(UpdateEngine.UpdateStatusConstants.IDLE ,"IDLE");
+        updateStatus.put(UpdateEngine.UpdateStatusConstants.CHECKING_FOR_UPDATE ,"CHECKING_FOR_UPDATE");
+        updateStatus.put(UpdateEngine.UpdateStatusConstants.UPDATE_AVAILABLE ,"UPDATE_AVAILABLE");
+        updateStatus.put(UpdateEngine.UpdateStatusConstants.DOWNLOADING ,"DOWNLOADING");
+        updateStatus.put(UpdateEngine.UpdateStatusConstants.VERIFYING ,"VERIFYING");
+        updateStatus.put(UpdateEngine.UpdateStatusConstants.FINALIZING ,"FINALIZING");
+        updateStatus.put(UpdateEngine.UpdateStatusConstants.UPDATED_NEED_REBOOT ,"UPDATED_NEED_REBOOT");
+        updateStatus.put(UpdateEngine.UpdateStatusConstants.REPORTING_ERROR_EVENT ,"REPORTING_ERROR_EVENT");
+        updateStatus.put(UpdateEngine.UpdateStatusConstants.ATTEMPTING_ROLLBACK ,"ATTEMPTING_ROLLBACK");
+        updateStatus.put(UpdateEngine.UpdateStatusConstants.DISABLED ,"DISABLED");
+
+        errorCode.put(UpdateEngine.ErrorCodeConstants.SUCCESS,"SUCCESS");
+        errorCode.put(UpdateEngine.ErrorCodeConstants.ERROR,"ERROR");
+        errorCode.put(UpdateEngine.ErrorCodeConstants.FILESYSTEM_COPIER_ERROR,"FILESYSTEM_COPIER_ERROR");
+        errorCode.put(UpdateEngine.ErrorCodeConstants.POST_INSTALL_RUNNER_ERROR,"POST_INSTALL_RUNNER_ERROR");
+        errorCode.put(UpdateEngine.ErrorCodeConstants.PAYLOAD_MISMATCHED_TYPE_ERROR,"PAYLOAD_MISMATCHED_TYPE_ERROR");
+        errorCode.put(UpdateEngine.ErrorCodeConstants.INSTALL_DEVICE_OPEN_ERROR,"INSTALL_DEVICE_OPEN_ERROR");
+        errorCode.put(UpdateEngine.ErrorCodeConstants.KERNEL_DEVICE_OPEN_ERROR,"KERNEL_DEVICE_OPEN_ERROR");
+        errorCode.put(UpdateEngine.ErrorCodeConstants.DOWNLOAD_TRANSFER_ERROR,"DOWNLOAD_TRANSFER_ERROR");
+        errorCode.put(UpdateEngine.ErrorCodeConstants.PAYLOAD_HASH_MISMATCH_ERROR,"PAYLOAD_HASH_MISMATCH_ERROR");
+        errorCode.put(UpdateEngine.ErrorCodeConstants.PAYLOAD_SIZE_MISMATCH_ERROR,"PAYLOAD_SIZE_MISMATCH_ERROR");
+        errorCode.put(UpdateEngine.ErrorCodeConstants.DOWNLOAD_PAYLOAD_VERIFICATION_ERROR,"DOWNLOAD_PAYLOAD_VERIFICATION_ERROR");
 
         button_start.setOnClickListener(new View.OnClickListener() {
             @Override
