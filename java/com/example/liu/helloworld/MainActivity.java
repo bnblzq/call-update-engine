@@ -31,54 +31,45 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private  Button button_start = null;
     private  Button button_cancel = null;
     private  Button button_reset = null;
+    private  static final Object lock = new Object();
+    private  int engineState = -1;
 
     public MyProgressBar progressBar = null;
     public UpdateEngine engine = new UpdateEngine();;
     public TextView tvShow = null;
-    public boolean start  = true;
-    public boolean cancel = false;
     ImplentOps ops = new ImplentOps();
-    boolean engineRunning = false;
+
 
     Map<Integer,String> updateStatus = new HashMap<>();
     Map<Integer,String> errorCode    = new HashMap<>();
 
-    public synchronized void setEngineState(boolean state){
-        engineRunning = state;
+    private int getEngineState(){
+        synchronized (lock){
+            return engineState;
+        }
     }
 
-    public synchronized boolean getEngineState(){
-         return engineRunning ;
+    private void setEngineState(int state){
+        synchronized (lock){
+            engineState = state;
+        }
     }
 
     public UpdateEngineCallback CallbackImplement = new UpdateEngineCallback() {
         @Override
         public void onStatusUpdate(int i, float v) {  //i==status  v==percent
-            Log.d(TAG,"status:"+i);
+            Log.d(TAG, "status:" + i);
             Log.d(TAG, "percent:" + v);
-            tvShow.append(updateStatus.get(i)+"\n");
+            tvShow.append(updateStatus.get(i) + "\n");
 
-            if( ( i>= UpdateEngine.UpdateStatusConstants.DOWNLOADING )&& (i <= UpdateEngine.UpdateStatusConstants.FINALIZING)){
-               setEngineState(true);
-                Log.d(TAG,"sett status "+  getEngineState());
-            }else {
-                setEngineState(false);
-                Log.d(TAG, "set status " + getEngineState());
-            }
-
-            if( (int)(v*100) < 100) {
-                //we leave 100% to show by onPayloadApplicationComplete
-                progressBar.setProgress((int) (v * 100));
-            }
+            setEngineState(i);
+            Log.d(TAG, "set status " + getEngineState());
+            progressBar.setProgress((int) (v * 100));
         }
 
         @Override
         public void onPayloadApplicationComplete(int errorNum) {
             //run here means success
-            if( errorNum == UpdateEngine.ErrorCodeConstants.SUCCESS ) {
-                tvShow.append(errorCode.get(errorNum)+"\n");
-                progressBar.setProgress(progressBar.getMax());
-            }
             tvShow.append(errorCode.get(errorNum)+"\n");
         }
     };
@@ -130,49 +121,39 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+
     @Override
     public void onClick(View v) {
-        switch (v.getId()){
-            case R.id.button_start:
-                ops.start();
-                if (start) {
-                    button_start.setEnabled(false);
-                    button_cancel.setEnabled(true);
-                    start = !start;
-                    cancel = !cancel;
-                }
-                Log.d(TAG, "press start");
-                break;
+        try {
+            switch (v.getId()){
+                case R.id.button_start:
 
-            case R.id.button_cancel:
-                Log.d(TAG, "get status in cancel" + getEngineState());
-                ops.interrupt();
-                if(getEngineState()) {
-                    Log.d(TAG, "engine ready to stop");
-                    engine.cancel();
-                }
-                Log.d(TAG, "press cancel");
-                if (cancel) {
-                    button_cancel.setEnabled(false);
-                    button_start.setEnabled(true);
-                    start = !start;
-                    cancel = !cancel;
-                }
-                break;
+                    ops.start();
+                    Log.d(TAG, "press start");
+                    break;
 
-            case R.id.button_reset:
-                try {
+                case R.id.button_cancel:
+                    Log.d(TAG, "get status in cancel" + getEngineState());
+                    if(ops.isAlive())
+                        ops.interrupt();
+                    if( getEngineState() > UpdateEngine.UpdateStatusConstants.UPDATE_AVAILABLE) {
+                        Log.d(TAG, "engine ready to stop");
+                        engine.cancel();
+                    }
+                    Log.d(TAG, "press cancel");
+                    break;
+
+                case R.id.button_reset:
                     Log.d(TAG, "press reset");
                     engine.resetStatus();
-                } catch (Exception e) {
-                    StringWriter sw = new StringWriter();
-                    e.printStackTrace(new PrintWriter(sw,true));
-                    String str = sw.toString();
-                    sendInfoToUI(str, mainHandler);
-                }
-                break;
+                    break;
+            }
+        } catch (Exception e) {
+            StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw,true));
+            String str = sw.toString();
+            sendInfoToUI(str, mainHandler);
         }
-
     }
 
     @Override
@@ -189,7 +170,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         button_reset.setOnClickListener(this);
 
         progressBar   = (MyProgressBar)findViewById(R.id.progrssbar_new);
-        button_cancel.setEnabled(false);
         tvShow.setMovementMethod(new ScrollingMovementMethod());
 
         //for clearly denotion
