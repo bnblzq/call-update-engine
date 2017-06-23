@@ -100,9 +100,13 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void run() {
             try {
+                String path = new String();
+                path = FileRead.readUSBFile();
+                Log.d(TAG,"is that correct: " + path);
+
 
                 //ota.zip resides on /data manually
-                Zip zip = new Zip(MainActivity.this);
+              /*  Zip zip = new Zip(MainActivity.this);
                 sendInfoToUI("unzipping file...",mainHandler);
                 zip.unZipToFolder(UPDATE_FILE);
                 sendInfoToUI("unzip done...", mainHandler);
@@ -114,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
                 //do perform
                 sendInfoToUI("applying payload...",mainHandler);
                 engine.applyPayload("file://" + MainActivity.this.getFilesDir() + File.separator + PAYLOAD_FILE, 0, 0, strArray);
-                sendInfoToUI("applying done...",mainHandler);
+                sendInfoToUI("applying done...",mainHandler);*/
 
             } catch (Exception e) {
                 StringWriter sw = new StringWriter();
