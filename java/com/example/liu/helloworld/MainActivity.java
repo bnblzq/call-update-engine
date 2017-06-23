@@ -15,6 +15,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashMap;
@@ -24,7 +25,7 @@ import java.util.Map;
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "Hello";
-    private static final String UPDATE_FILE = "0614ota.zip";
+    //private static final String UPDATE_FILE = "0614ota.zip";
     private static final String PAYLOAD_FILE = "payload.bin";
     private static final String PROPERTY_FILE = "payload_properties.txt";
     private Handler mainHandler = new Handler();
@@ -103,12 +104,13 @@ public class MainActivity extends AppCompatActivity {
                 String path = new String();
                 path = FileRead.readUSBFile();
                 Log.d(TAG,"is that correct: " + path);
-
+                if(path == null)
+                    throw new FileNotFoundException("ota zip not found");
 
                 //ota.zip resides on /data manually
-              /*  Zip zip = new Zip(MainActivity.this);
+                Zip zip = new Zip(MainActivity.this);
                 sendInfoToUI("unzipping file...",mainHandler);
-                zip.unZipToFolder(UPDATE_FILE);
+                zip.unZipToFolder(path);
                 sendInfoToUI("unzip done...", mainHandler);
 
                 //read file
@@ -118,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
                 //do perform
                 sendInfoToUI("applying payload...",mainHandler);
                 engine.applyPayload("file://" + MainActivity.this.getFilesDir() + File.separator + PAYLOAD_FILE, 0, 0, strArray);
-                sendInfoToUI("applying done...",mainHandler);*/
+                sendInfoToUI("applying done...",mainHandler);
 
             } catch (Exception e) {
                 StringWriter sw = new StringWriter();

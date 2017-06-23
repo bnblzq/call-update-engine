@@ -26,13 +26,13 @@ public class Zip {
         ZipEntry zipEntry    ;
         String szName        ;
         byte[] buffer = new byte[1024];
-        File zipFile = new File(Environment.getDataDirectory(),zipFileString);
+        File zipFile = new File(zipFileString);
 
      //   Log.d(TAG,"" + Environment.getDataDirectory());
      //   Log.d(TAG, "" + mContext.getFilesDir());
-        if(  zipFile.isFile() && zipFile.delete() ){
+        /*if(  zipFile.isFile() && zipFile.delete() ){
             Log.d(TAG, zipFile +" exists before and be deleted");
-        }
+        }*/
 
 
         inZip = new ZipInputStream(new FileInputStream(zipFile));
@@ -48,6 +48,7 @@ public class Zip {
                 szName = zipEntry.getName();
                 Log.d(TAG,szName);
 
+                //it will overwrite old files
                 FileOutputStream out = mContext.openFileOutput(szName, mContext.MODE_PRIVATE);
                 int len;
                 while( (len = inZip.read(buffer)) != -1){
