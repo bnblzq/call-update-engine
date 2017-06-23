@@ -15,15 +15,10 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
-
-//import android.widget.Toast;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -37,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
 
     public  Button button_start = null;
     public  Button button_cancel = null;
-    public ProgressBar progressBar = null;
+    public MyProgressBar progressBar = null;
     public UpdateEngine engine = new UpdateEngine();;
     public TextView tvShow = null;
     public boolean start  = true;
@@ -142,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
         button_start =  (Button) findViewById(R.id.button_start);
         button_cancel = (Button) findViewById(R.id.button_cancel);
         button_cancel.setEnabled(false);
-        progressBar = (ProgressBar)findViewById(R.id.progrss_bar);
+        progressBar = (MyProgressBar)findViewById(R.id.progrssbar_new);
 
         //for clearly denotion
         updateStatus.put(UpdateEngine.UpdateStatusConstants.IDLE ,"IDLE");
